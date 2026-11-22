@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RecallRocket | Smart Learning</title>
+<style>
+:root{
+--bg:#101426;--panel:#1c2340;--soft:#293252;
+--text:#f5f6ff;--muted:#aab2cc;
+--accent:#9477ff;--cyan:#48dce5;
+--green:#54dfa0;--red:#ff718b;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,sans-serif}
+body.light{--bg:#f2f3fc;--panel:#fff;--soft:#e9ebf7;--text:#20243a;--muted:#747991}
+header{display:flex;justify-content:space-between;align-items:center;padding:17px 5%;background:var(--panel);position:sticky;top:0;z-index:10}
+.logo{font-size:24px;font-weight:900}
+.logo span{color:var(--accent)}
+.layout{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 65px)}
+nav{background:var(--panel);padding:20px 12px}
+nav button{display:block;width:100%;text-align:left;margin:5px 0;background:transparent;color:var(--muted)}
+nav button.active,nav button:hover{background:var(--soft);color:var(--text)}
+main{padding:30px;max-width:1400px;width:100%;margin:auto}
+button{cursor:pointer;border:0;border-radius:10px;padding:11px 15px;background:var(--accent);color:white;font-weight:bold}
+button:hover{filter:brightness(1.15)}
+.secondary{background:var(--soft);color:var(--text)}
+.danger{background:#c74761}
+.page{display:none}
+.page.active{display:block}
+h1{font-size:30px;margin:0 0 8px}
+h2{font-size:21px}
+p{color:var(--muted);line-height:1.6}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin:25px 0}
+.card,.panel{background:var(--panel);padding:21px;border-radius:16px;border:1px solid #8882}
+.stat-number{font-size:30px;font-weight:900;margin:12px 0 5px}
+.stat-label{font-size:13px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:1.4fr 1fr;gap:17px}
+input,textarea,select{width:100%;padding:13px;margin:8px 0 15px;border:1px solid #8885;border-radius:10px;background:var(--soft);color:var(--text);font:inherit}
+textarea{min-height:85px}
+label{font-size:13px;color:var(--muted)}
+.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}
+.progress{height:11px;background:var(--soft);border-radius:20px;overflow:hidden;margin:15px 0}
+.progress div{height:100%;background:linear-gradient(90deg,var(--accent),var(--cyan));transition:.3s}
+.flashcard{min-height:230px;display:flex;justify-content:center;align-items:center;text-align:center;flex-direction:column;background:linear-gradient(135deg,#7958df,#28518e);border-radius:20px;padding:25px;margin:18px 0;cursor:pointer}
+.flashcard h2{font-size:26px}
+.flashcard p{color:white;font-size:17px}
+.item{padding:15px;background:var(--soft);border-radius:12px;margin:10px 0}
+.item small{color:var(--muted)}
+.bar-chart{height:170px;display:flex;align-items:end;gap:12px;padding:15px 0}
+.bar{flex:1;min-width:10px;background:linear-gradient(var(--cyan),var(--accent));border-radius:7px 7px 0 0;position:relative}
+.bar span{position:absolute;bottom:-23px;left:50%;transform:translateX(-50%);font-size:11px;color:var(--muted)}
+.badge{display:inline-block;background:var(--soft);padding:7px 12px;border-radius:20px;margin:4px;font-size:12px}
+.empty{text-align:center;padding:25px;color:var(--muted)}
+footer{text-align:center;padding:25px;color:var(--muted)}
+@media(max-width:800px){
+.layout{grid-template-columns:1fr}
+nav{display:flex;overflow-x:auto;padding:10px;gap:5px}
+nav button{min-width:max-content;width:auto;margin:0}
+main{padding:18px}
+.stats{grid-template-columns:repeat(2,1fr)}
+.grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🚀 Recall<span>Rocket</span></div>
+  <div>
+    <span id="headerXP">⭐ 0 XP</span>
+    <button class="secondary" onclick="toggleTheme()">🌙</button>
+  </div>
+</header>
+
+<div class="layout">
+<nav>
+  <button class="active" data-page="dashboard">🏠 Dashboard</button>
+  <button data-page="cards">📚 Flashcards</button>
+  <button data-page="study">🧠 Study Room</button>
+  <button data-page="quiz">🎯 Quick Quiz</button>
+  <button data-page="planner">📅 Study Planner</button>
+  <button data-page="analytics">📊 Analytics</button>
+</nav>
+
+<main>
+
+<!-- DASHBOARD -->
+<section id="dashboard" class="page active">
+  <h1>Welcome back, Learner! 👋</h1>
+  <p>Your next breakthrough starts with one small study session.</p>
+
+  <div class="stats">
+    <div class="card"><div>📚</div><div class="stat-number" id="total">0</div><div class="stat-label">Total Flashcards</div></div>
+    <div class="card"><div>🔥</div><div class="stat-number" id="streak">0</div><div class="stat-label">Day Streak</div></div>
+    <div class="card"><div>⭐</div><div class="stat-number" id="xp">0</div><div class="stat-label">Experience Points</div></div>
+    <div class="card"><div>🎯</div><div class="stat-number" id="accuracy">0%</div><div class="stat-label">Study Accuracy</div></div>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <h2>🚀 Your Learning Journey</h2>
+      <p id="dueText">Loading your study progress...</p>
+      <div class="progress"><div id="progressBar" style="width:0%"></div></div>
+      <p id="progressText">0% reviewed</p>
+      <button onclick="showPage('study')">Start Studying →</button>
+    </div>
+    <div class="panel">
+      <h2>🏆 Achievements</h2>
+      <div id="achievements"></div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:18px">
+    <h2>✨ Recent Activity</h2>
+    <div id="recent"></div>
+  </div>
+</section>
+
+<!-- FLASHCARDS -->
+<section id="cards" class="page">
+  <h1>📚 My Flashcards</h1>
+  <p>Create your own smart learning collection.</p>
+
+  <div class="panel">
+    <h2 id="formTitle">➕ Create New Flashcard</h2>
+    <form id="cardForm">
+      <label>Subject</label>
+      <input id="subject" placeholder="e.g. JavaScript" required maxlength="60">
+      <label>Question</label>
+      <textarea id="question" placeholder="Enter your question..." required maxlength="500"></textarea>
+      <label>Answer</label>
+      <textarea id="answer" placeholder="Enter the answer..." required maxlength="2000"></textarea>
+      <div class="actions">
+        <button type="submit" id="saveBtn">Save Flashcard</button>
+        <button type="button" class="secondary" onclick="resetForm()">Clear</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="panel" style="margin-top:18px">
+    <h2>My Collection</h2>
+    <input id="search" placeholder="🔍 Search questions, answers or subjects...">
+    <select id="filter">
+      <option value="">All Subjects</option>
+    </select>
+    <div id="cardList"></div>
+  </div>
+</section>
+
+<!-- STUDY ROOM -->
+<section id="study" class="page">
+  <h1>🧠 Study Room</h1>
+  <p>Practice regularly and strengthen your memory.</p>
+
+  <div class="panel">
+    <div class="badge" id="studySubject">Your Study Session</div>
+    <div class="flashcard" onclick="flipCard()">
+      <small id="cardNumber">READY TO LEARN</small>
+      <h2 id="studyQuestion">Press Start to begin!</h2>
+      <p id="studyAnswer" style="display:none"></p>
+      <small>👆 Click the card to reveal the answer</small>
+    </div>
+    <div class="actions">
+      <button onclick="startStudy()">Start / Restart</button>
+      <button class="secondary" onclick="flipCard()">Reveal Answer</button>
+    </div>
+    <div class="actions">
+      <button style="background:#20a879" onclick="reviewCard(true)">✓ I Knew It</button>
+      <button style="background:#c74761" onclick="reviewCard(false)">✗ Need Practice</button>
+    </div>
+    <p id="studyMessage">Your progress will appear here.</p>
+  </div>
+</section>
+
+<!-- QUIZ -->
+<section id="quiz" class="page">
+  <h1>🎯 Quick Quiz</h1>
+  <p>Test your knowledge with a random flashcard challenge.</p>
+
+  <div class="panel">
+    <div class="stats">
+      <div class="card"><div class="stat-number" id="quizScore">0</div><div class="stat-label">Correct Answers</div></div>
+      <div class="card"><div class="stat-number" id="quizCount">0</div><div class="stat-label">Questions Answered</div></div>
+    </div>
+    <div class="flashcard" style="cursor:default">
+      <small>QUESTION</small>
+      <h2 id="quizQuestion">Ready for a challenge?</h2>
+    </div>
+    <label>Your Answer</label>
+    <textarea id="quizAnswer" placeholder="Write your answer here..."></textarea>
+    <div class="actions">
+      <button onclick="checkQuiz()">Check Answer</button>
+      <button class="secondary" onclick="nextQuiz()">Next Question</button>
+    </div>
+    <div class="item" id="quizFeedback">Start a quiz to test yourself!</div>
+  </div>
+</section>
+
+<!-- PLANNER -->
+<section id="planner" class="page">
+  <h1>📅 Study Planner</h1>
+  <p>Organize your daily learning goals.</p>
+  <div class="panel">
+    <h2>Create a Study Task</h2>
+    <form id="taskForm">
+      <label>Task Name</label>
+      <input id="taskName" placeholder="e.g. Revise JavaScript" required>
+      <label>Study Date</label>
+      <input type="date" id="taskDate" required>
+      <button type="submit">Add Task</button>
+    </form>
+  </div>
+  <div class="panel" style="margin-top:18px">
+    <h2>My Study Tasks</h2>
+    <div id="taskList"></div>
+  </div>
+</section>
+
+<!-- ANALYTICS -->
+<section id="analytics" class="page">
+  <h1>📊 Learning Analytics</h1>
+  <p>Understand your learning performance.</p>
+  <div class="stats">
+    <div class="card"><div class="stat-number" id="aReviews">0</div><div class="stat-label">Total Reviews</div></div>
+    <div class="card"><div class="stat-number" id="aCorrect">0</div><div class="stat-label">Correct Reviews</div></div>
+    <div class="card"><div class="stat-number" id="aAccuracy">0%</div><div class="stat-label">Accuracy</div></div>
+    <div class="card"><div class="stat-number" id="aSubjects">0</div><div class="stat-label">Subjects</div></div>
+  </div>
+  <div class="panel">
+    <h2>📈 Last 7 Study Days</h2>
+    <div class="bar-chart" id="chart"></div>
+  </div>
+  <div class="panel" style="margin-top:18px">
+    <h2>🏅 Your Learning Level</h2>
+    <h2 id="level">Beginner 🌱</h2>
+    <div class="progress"><div id="levelBar" style="width:0%"></div></div>
+    <p id="levelText">Earn XP by completing study sessions.</p>
+  </div>
+</section>
+
+<footer>🚀 RecallRocket • Learn Smarter. Remember Longer.</footer>
+</main>
+</div>
+
+<script>
+let cards = [];
+let dashboard = {};
+let currentIndex = 0;
+let currentCard = null;
+let answerVisible = false;
+let editingId = null;
+let quizCard = null;
+let quizScore = 0;
+let quizCount = 0;
+let quizChecked = false;
+
+const $ = id => document.getElementById(id);
+
+async function api(url, options = {}) {
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      "Content-Type":"application/json",
+      ...(options.headers || {})
+    }
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || "Something went wrong.");
+  return data;
+}
+
+function notify(message) {
+  alert(message);
+}
+
+function showPage(page) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
+  $(page).classList.add("active");
+  document.querySelector(`[data-page="${page}"]`).classList.add("active");
+
+  if (page === "dashboard") loadDashboard();
+  if (page === "cards") loadCards();
+  if (page === "analytics") loadAnalytics();
+  if (page === "planner") renderTasks();
+}
+
+document.querySelectorAll("nav button").forEach(button => {
+  button.addEventListener("click", () => showPage(button.dataset.page));
+});
+
+async function loadDashboard() {
+  try {
+    dashboard = await api("/api/dashboard");
+    cards = await api("/api/cards");
+
+    $("total").textContent = dashboard.totalCards;
+    $("streak").textContent = dashboard.streak;
+    $("xp").textContent = dashboard.xp;
+    $("headerXP").textContent = "⭐ " + dashboard.xp + " XP";
+    $("accuracy").textContent = dashboard.accuracy + "%";
+
+    const percentage = dashboard.totalCards
+      ? Math.round((dashboard.totalCards - dashboard.dueCards) / dashboard.totalCards * 100)
+      : 0;
+
+    $("progressBar").style.width = percentage + "%";
+    $("progressText").textContent = percentage + "% cards not currently due";
+    $("dueText").textContent = dashboard.dueCards + " cards are ready for revision.";
+
+    let badges = [];
+    if (dashboard.totalCards >= 1) badges.push("📚 First Card");
+    if (dashboard.xp >= 50) badges.push("⭐ Rising Star");
+    if (dashboard.xp >= 200) badges.push("🏆 Super Learner");
+    if (dashboard.streak >= 3) badges.push("🔥 3-Day Streak");
+    if (dashboard.streak >= 7) badges.push("👑 Weekly Champion");
+
+    $("achievements").innerHTML = badges.length
+      ? badges.map(b => `<span class="badge">${b}</span>`).join("")
+      : "Complete study sessions to unlock achievements!";
+
+    $("recent").innerHTML = dashboard.history.length
+      ? dashboard.history.slice().reverse().map(item =>
+        `<div class="item">${item.correct ? "✅" : "📖"} ${escapeHTML(item.subject)} <small>${new Date(item.date).toLocaleDateString()}</small></div>`
+      ).join("")
+      : '<div class="empty">Your study activity will appear here.</div>';
+  } catch (error) {
+    notify(error.message);
+  }
+}
+
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, char => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",
+    '"':"&quot;","'":"&#39;"
+  })[char]);
+}
+
+async function loadCards() {
+  try {
+    const search = $("search").value;
+    const subject = $("filter").value;
+
+    cards = await api("/api/cards?search=" + encodeURIComponent(search) + "&subject=" + encodeURIComponent(subject));
+
+    const subjects = await api("/api/subjects");
+    $("filter").innerHTML = '<option value="">All Subjects</option>' +
+      subjects.map(s => `<option value="${escapeHTML(s)}">${escapeHTML(s)}</option>`).join("");
+    $("filter").value = subject;
+
+    $("cardList").innerHTML = cards.length
+      ? cards.map(card => `
+        <div class="item">
+          <span class="badge">${escapeHTML(card.subject)}</span>
+          <strong>${escapeHTML(card.question)}</strong>
+          <small>${escapeHTML(card.answer)}</small>
+          <p>Reviews: ${card.reviews} | Correct: ${card.correct}</p>
+          <div class="actions">
+            <button class="secondary" onclick="editCard(${card.id})">✏️ Edit</button>
+            <button class="danger" onclick="deleteCard(${card.id})">🗑 Delete</button>
+          </div>
+        </div>
+      `).join("")
+      : '<div class="empty">No flashcards found. Create your first card above!</div>';
+  } catch(error) {
+    notify(error.message);
+  }
+}
+
+$("search").addEventListener("input", loadCards);
+$("filter").addEventListener("change", loadCards);
+
+$("cardForm").addEventListener("submit", async event => {
+  event.preventDefault();
+
+  const data = {
+    subject:$("subject").value,
+    question:$("question").value,
+    answer:$("answer").value
+  };
+
+  try {
+    if (editingId) {
+      await api("/api/cards/" + editingId, {
+        method:"PUT",
+        body:JSON.stringify(data)
+      });
+      notify("Flashcard updated successfully!");
+    } else {
+      await api("/api/cards", {
+        method:"POST",
+        body:JSON.stringify(data)
+      });
+      notify("New flashcard created successfully!");
+    }
+
+    resetForm();
+    await loadCards();
+    await loadDashboard();
+  } catch(error) {
+    notify(error.message);
+  }
+});
+
+function resetForm() {
+  $("cardForm").reset();
+  editingId = null;
+  $("formTitle").textContent = "➕ Create New Flashcard";
+  $("saveBtn").textContent = "Save Flashcard";
+}
+
+async function editCard(id) {
+  try {
+    const card = await api("/api/cards");
+    const selected = card.find(c => c.id === id);
+    if (!selected) return;
+
+    editingId = id;
+    $("subject").value = selected.subject;
+    $("question").value = selected.question;
+    $("answer").value = selected.answer;
+    $("formTitle").textContent = "✏️ Edit Flashcard";
+    $("saveBtn").textContent = "Update Flashcard";
+    window.scrollTo({top:0,behavior:"smooth"});
+  } catch(error) {
+    notify(error.message);
+  }
+}
+
+async function deleteCard(id) {
+  if (!confirm("Are you sure you want to delete this flashcard?")) return;
+  try {
+    await api("/api/cards/" + id, {method:"DELETE"});
+    await loadCards();
+    await loadDashboard();
+    notify("Flashcard deleted!");
+  } catch(error) {
+    notify(error.message);
+  }
+}
+
+function startStudy() {
+  cards = [];
+  api("/api/cards").then(result => {
+    cards = result.filter(c => new Date(c.due) <= new Date());
+
+    if (!cards.length) {
+      cards = result;
+    }
+
+    currentIndex = 0;
+    displayStudyCard();
+  }).catch(error => notify(error.message));
+}
+
+function displayStudyCard() {
+  if (!cards.length) {
+    currentCard = null;
+    $("studyQuestion").textContent = "No flashcards available!";
+    $("studyAnswer").style.display = "none";
+    return;
+  }
+
+  currentCard = cards[currentIndex];
+  answerVisible = false;
+
+  $("cardNumber").textContent = "CARD " + (currentIndex + 1) + " OF " + cards.length;
+  $("studySubject").textContent = currentCard.subject;
+  $("studyQuestion").textContent = currentCard.question;
+  $("studyAnswer").textContent = currentCard.answer;
+  $("studyAnswer").style.display = "none";
+  $("studyMessage").textContent = "Think about your answer, then reveal it!";
+}
+
+function flipCard() {
+  if (!currentCard) return;
+  answerVisible = !answerVisible;
+  $("studyAnswer").style.display = answerVisible ? "block" : "none";
+}
+
+async function reviewCard(correct) {
+  if (!currentCard || !answerVisible) {
+    notify("Reveal the answer before submitting your review.");
+    return;
+  }
+
+  try {
+    const reviewedId = currentCard.id;
+    const result = await api("/api/review/" + reviewedId, {
+      method:"POST",
+      body:JSON.stringify({correct})
+    });
+
+    $("studyMessage").textContent =
+      (correct ? "🎉 Great job! " : "💪 Keep practising! ") +
+      "+" + (correct ? 15 : 5) + " XP earned.";
+
+    await loadDashboard();
+    await loadAnalytics();
+
+    cards = cards.filter(c => c.id !== reviewedId);
+
+    if (cards.length) {
+      currentIndex = 0;
+      displayStudyCard();
+    } else {
+      currentCard = null;
+      $("studyQuestion").textContent = "🎉 Session complete!";
+      $("studyAnswer").style.display = "none";
+      $("cardNumber").textContent = "WELL DONE";
+      $("studyMessage").textContent = "You completed your study session!";
+    }
+  } catch(error) {
+    notify(error.message);
+  }
+}
+
+function nextQuiz() {
+  if (!cards.length) {
+    api("/api/cards").then(result => {
+      cards = result;
+      chooseQuizCard();
+    });
+    return;
+  }
+  chooseQuizCard();
+}
+
+function chooseQuizCard() {
+  if (!cards.length) {
+    $("quizQuestion").textContent = "Create flashcards to start a quiz!";
+    return;
+  }
+
+  quizCard = cards[Math.floor(Math.random() * cards.length)];
+  quizChecked = false;
+  $("quizQuestion").textContent = quizCard.question;
+  $("quizAnswer").value = "";
+  $("quizFeedback").textContent = "Write your answer and check it!";
+}
+
+async function checkQuiz() {
+  if (!quizCard || quizChecked) {
+    notify("Start a new question first!");
+    return;
+  }
+
+  const answer = $("quizAnswer").value.trim();
+  if (!answer) {
+    notify("Please enter your answer first.");
+    return;
+  }
+
+  quizChecked = true;
+  quizCount++;
+
+  $("quizFeedback").innerHTML =
+    "<strong>Correct answer:</strong><br>" +
+    escapeHTML(quizCard.answer) +
+    "<br><br><span>Compare your answer and judge yourself honestly.</span>";
+
+  const correct = confirm("Did you answer correctly? Press OK for Yes or Cancel for No.");
+
+  if (correct) {
+    quizScore++;
+  }
+
+  try {
+    await api("/api/review/" + quizCard.id, {
+      method:"POST",
+      body:JSON.stringify({correct})
+    });
+  } catch(error) {
+    notify(error.message);
+  }
+
+  $("quizScore").textContent = quizScore;
+  $("quizCount").textContent = quizCount;
+  await loadDashboard();
+}
+
+$("taskDate").value = new Date().toISOString().slice(0,10);
+
+function getTasks() {
+  try {
+    return JSON.parse(localStorage.getItem("rrTasks") || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function saveTasks(tasks) {
+  localStorage.setItem("rrTasks",JSON.stringify(tasks));
+}
+
+$("taskForm").addEventListener("submit",event => {
+  event.preventDefault();
+
+  const tasks = getTasks();
+  tasks.push({
+    id:Date.now(),
+    name:$("taskName").value.trim(),
+    date:$("taskDate").value,
+    done:false
+  });
+
+  saveTasks(tasks);
+  $("taskForm").reset();
+  $("taskDate").value = new Date().toISOString().slice(0,10);
+  renderTasks();
+});
+
+function renderTasks() {
+  const tasks = getTasks().sort((a,b) => a.date.localeCompare(b.date));
+
+  $("taskList").innerHTML = tasks.length
+    ? tasks.map(task => `
+      <div class="item">
+        <strong>${escapeHTML(task.name)}</strong>
+        <small>📅 ${escapeHTML(task.date)}</small>
+        <div class="actions">
+          <button class="secondary" onclick="toggleTask(${task.id})">${task.done ? "↩ Undo" : "✓ Complete"}</button>
+          <button class="danger" onclick="deleteTask(${task.id})">Delete</button>
+        </div>
+        ${task.done ? '<span class="badge">Completed</span>' : ""}
+      </div>
+    `).join("")
+    : '<div class="empty">No tasks yet. Add your first study goal!</div>';
+}
+
+function toggleTask(id) {
+  const tasks = getTasks().map(t =>
+    t.id === id ? {...t,done:!t.done} : t
+  );
+  saveTasks(tasks);
+  renderTasks();
+}
+
+function deleteTask(id) {
+  saveTasks(getTasks().filter(t => t.id !== id));
+  renderTasks();
+}
+
+async function loadAnalytics() {
+  try {
+    const data = await api("/api/dashboard");
+
+    $("aReviews").textContent = data.reviews;
+    $("aCorrect").textContent = Math.round(data.reviews * data.accuracy / 100);
+    $("aAccuracy").textContent = data.accuracy + "%";
+    $("aSubjects").textContent = data.subjects.length;
+
+    const xp = data.xp;
+    const level = xp >= 500 ? "Master Learner 👑" :
+      xp >= 200 ? "Expert 🏆" :
+      xp >= 50 ? "Rising Star ⭐" : "Beginner 🌱";
+
+    $("level").textContent = level;
+    $("levelBar").style.width = Math.min(100,xp % 200 / 2) + "%";
+    $("levelText").textContent = xp + " XP earned. Keep learning to level up!";
+
+    const history = data.history || [];
+    const days = [];
+
+    for (let i=6;i>=0;i--) {
+      const date = new Date();
+      date.setDate(date.getDate()-i);
+      const key = date.toISOString().slice(0,10);
+
+      const count = history.filter(item =>
+        item.date.slice(0,10) === key
+      ).length;
+
+      days.push({label:date.toLocaleDateString("en",{weekday:"short"}),count});
+    }
+
+    const max = Math.max(1,...days.map(d=>d.count));
+
+    $("chart").innerHTML = days.map(day => `
+      <div class="bar" style="height:${Math.max(5,day.count/max*100)}%">
+        <span>${day.label}</span>
+      </div>
+    `).join("");
+
+  } catch(error) {
+    notify(error.message);
+  }
+}
+
+function toggleTheme() {
+  document.body.classList.toggle("light");
+  localStorage.setItem("rrTheme",
+    document.body.classList.contains("light") ? "light" : "dark"
+  );
+}
+
+if (localStorage.getItem("rrTheme") === "light") {
+  document.body.classList.add("light");
+}
+
+async function initialize() {
+  try {
+    await api("/api/health");
+    await loadDashboard();
+    await loadCards();
+    await loadAnalytics();
+    renderTasks();
+  } catch(error) {
+    notify("Cannot connect to RecallRocket server. Please start the server first.");
+  }
+}
+
+initialize();
+</script>
+</body>
+</html>
